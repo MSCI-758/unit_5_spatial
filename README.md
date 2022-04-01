@@ -15,6 +15,16 @@ This unit will cover map generation and the manipulation of spatial data, includ
 
 ***
 
+#### Homework: 
+
+-  hw_7_spatial - Assigned: 3/31/2022, Due: 4/12/2022
+
+HW7 repo link: 
+
+https://classroom.github.com/a/cRtafB8z
+
+***
+
 #### Lesson 1: bathymetry and chlorophyll rasters
 
 New packages: raster, mapdata, marmap
