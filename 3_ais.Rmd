@@ -91,15 +91,23 @@ illegal_paths = law_breakers %>%
   arrange(date_time) %>% # ensure ship tracks points are in chronological order
   group_by(CallSign) %>% # essentially groups by call sign but retains length (in meters) info
   summarise(do_union=FALSE) %>% # collapses data into multipoint; do_union=FALSE prevents reordering points
-  st_cast("LINESTRING") 
+  st_cast("LINESTRING") %>%
+  st_make_valid() # gets rid of lines with <2 points
 
 # plot ship tracks
+# illegal_paths_for_plot = illegal_paths[-16,]
+# install.packages("mapview")
+# library(mapview)
+# npts(illegal_paths, by_feature=T)
+# 
+# ggplot() +
+#   geom_sf(data=illegal_paths_for_plot)
 law_breaking_map = ggplot()+
   geom_polygon(data = world_map, aes(x = long, y = lat, group = group), fill = "black", color = NA) + # add coastline
   geom_sf(data=USA_crit_hab, alpha = 0.5, color=NA, fill='yellow') +
   geom_sf(data=illegal_paths, aes(color=CallSign)) +
   coord_sf(1.3, xlim = lon_bounds, ylim = lat_bounds) + # Crop map edges
-  guides(color=FALSE) +
+  guides(color="none") +
   ylab("Latitude") + xlab("Longitude") + theme_classic() 
 
 law_breaking_map
@@ -110,11 +118,8 @@ Now that we have converted our AIS points into lines, we can calculate the lengt
 ```{r}
 
 # What are the lengths of the ship tracks that intersected the RW critical habitat?
-illegal_path_lengths = illegal_paths %>%
-  st_make_valid() %>% # gets rid of lines with <2 points
-  mutate(track_length_m = as.numeric(st_length(geometry)))  # Calculate length of ship tracks in meters
-
-tot_illegal_path = illegal_path_lengths %>%
+tot_illegal_path = illegal_paths %>%
+  mutate(track_length_m = as.numeric(st_length(geometry))) %>% # Calculate length of ship tracks in meters
   summarize(tot_track_length_m = sum(track_length_m)) %>%
   mutate(tot_track_length_km = tot_track_length_m/1000) %>%
   st_drop_geometry()

@@ -58,7 +58,7 @@ library(marmap) # getNOAA.bathy()
 
 ### Reading and organizing disparate spatial datasets
 
-Now we are going to load in three right whale datasets. (This data is all publicly available, but it required me to combine multiple, messy, sources as well as data requests from the North Atlantic Right Whale Consortium.) We'll load: 
+Now we are going to load in three right whale datasets. (This data is all technically publicly available, but it required me to combine multiple, messy, sources as well as data requests from the North Atlantic Right Whale Consortium.) We'll load: 
 
 1. shapefiles that contain polygons corresponding to the boundaries of right whale critical habitats in the US in 2017
 2. a .csv file that contains the lat/lon boundaries of right whale critical habitats in Canada in 2017
@@ -72,7 +72,7 @@ carcass = read.csv('data/RW_carcasses_2017.csv')
 
 #Read in US critical habitat shapefiles 
 # https://www.greateratlantic.fisheries.noaa.gov/educational_resources/gis/data/index.html
-USA_crit_hab = st_read('data/North_Atlantic_Right_Whale_Critical_Habitat/','North_Atlantic_Right_Whale_Critical_Habitat') # reads in set of shapefiles
+USA_crit_hab = st_read(dsn = 'data/North_Atlantic_Right_Whale_Critical_Habitat/',layer = 'North_Atlantic_Right_Whale_Critical_Habitat') # reads in set of shapefiles
 USA_crit_hab
 USA_crit_hab_sf = st_transform(USA_crit_hab, crs=4326) #crs="+proj=longlat +datum=WGS84")
 ```
@@ -90,7 +90,7 @@ head(CAN_crit_hab)
 CAN_crit_hab_sf = CAN_crit_hab %>% 
   st_as_sf(coords=c("lon","lat"), crs=4326) %>% # convert to sf
   dplyr::group_by(habitat, country) %>% 
-  dplyr::summarise(do_union=FALSE) %>% # collapses data into multipoint; do_union=FALSE prevents reordering points; check out ?summarise.sf
+  dplyr::summarize(do_union=FALSE) %>% # collapses data into multipoint; do_union=FALSE prevents reordering points; check out ?summarise.sf
   st_cast("POLYGON") # converts btwn spatial geometries
 print(CAN_crit_hab_sf) # 2 simple features, with habitat and country attributes
 ```
@@ -101,9 +101,10 @@ Now let's get our USA habitat and our Canada habitat data ready to be joined. We
 # Simply USA_crit_hab data frame to match CAN_crit_hab
 plot(USA_crit_hab_sf$geometry[1], axes=TRUE) # GOM habitat
 plot(USA_crit_hab_sf$geometry[2], axes=TRUE) # FL / GA habitat
-USA_crit_hab_sf$habitat=c("NMFS_GOM", "SEUS")
+USA_crit_hab_sf$habitat=c("GOM", "SEUS")
 USA_crit_hab_sf$country="USA"
-USA_crit_hab_sf = USA_crit_hab_sf %>% dplyr::select(country, habitat, geometry) # drops all other variables from shapefile
+USA_crit_hab_sf = USA_crit_hab_sf %>% 
+  dplyr::select(country, habitat, geometry) # drops all other variables from shapefile
 
 # Join the USA and Canada critical habitat sf objects
 crit_hab = rbind(USA_crit_hab_sf, CAN_crit_hab_sf)
@@ -111,7 +112,7 @@ crit_hab = rbind(USA_crit_hab_sf, CAN_crit_hab_sf)
 
 ### Making maps
 
-So that was a lot of hard work merging our USA and Canada datasets because their original formats were very different. Different file types (.csv vs. shapefile), different geometries (coordinates vs. polygons), different attributes and different CRSs. Now that we have combined these disparate datasets, we can use `ggplot` tools to turn this spatial vector data into maps!
+So that was a lot of hard work merging our USA and Canada datasets because their original formats were very different. Different file types (.csv vs. shapefile), different geometries (coordinates vs. polygons), different attributes (the data columns associated with each geometry) and different CRSs. Now that we have combined these disparate datasets, we can use `ggplot` tools to turn this spatial vector data into maps!
 
 ```{r}
 # set GOM + GSL map limits
@@ -122,7 +123,7 @@ lat_bounds = c(39, 53)
 world_map = map_data("worldHires", ylim = lat_bounds, xlim = lon_bounds)
 
 # plot critical habitats and carcass locations
-crit_map = ggplot()+
+crit_map = ggplot() +
   geom_polygon(data = world_map, aes(x = long, y = lat, group = group), fill = "black") + # add coastline
   geom_sf(data=crit_hab, alpha = 0.5, aes(fill=country)) +
   geom_point(data = carcass, aes(x = Longitude, y = Latitude, color = Carcass_position), size=2) + 

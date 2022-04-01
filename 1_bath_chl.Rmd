@@ -213,7 +213,7 @@ GOM_bath_map # print to screen
 ggsave(GOM_bath_map, filename='figures/GOM_bath_raster.pdf', device="pdf", height=5, width=7)
 ```
 
-For bathymetry data, it can be nice to add contour lines to the plot. Take a look at these contour maps without and without the underlying colored bathymetry data:
+For bathymetry data, it can be nice to add contour lines to the plot:
 
 ```{r}
 # plot contours
@@ -300,10 +300,12 @@ trophic_status = stack_df %>%
 
 # Plot histogram of bathymetric depth (m) for each trophic index
 ggplot() +
-  geom_histogram(aes(x=bath_m), data=stack_df %>% filter(!is.na(trophic_index))) +
+  geom_histogram(aes(x=bath_m), data=stack_df) + # %>% filter(!is.na(trophic_index))) +
   facet_wrap(~trophic_index)
 ggplot() +
   geom_boxplot(aes(y=bath_m, x=trophic_index), data=stack_df)
+
+stack_df %>% filter(trophic_index=="eutrophic", bath_m > 50) 
 
 # plot trophic raster data
 trophic_map = ggplot()+
